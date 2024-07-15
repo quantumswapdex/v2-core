@@ -3,6 +3,8 @@ pragma solidity ^0.8.13;
 
 import {Test, console} from 'forge-std/Test.sol';
 import {IUniswapV2ERC20, Deployer} from './util/Deployer.sol';
+import {Constants} from './util/Constants.sol';
+import {Helpers} from './util/Helpers.sol';
 
 abstract contract Deployed is Test {
     IUniswapV2ERC20 token;
@@ -14,20 +16,27 @@ abstract contract Deployed is Test {
 }
 
 contract ERC20Tests is Deployed {
-    event Approval(address indexed owner, address indexed spender, uint value);
-    event Transfer(address indexed from, address indexed to, uint value);
-
-    uint256 MAX_INT = 2 ** 256 - 1;
-    address other = address(1);
-    address unauthorized_other = address(2);
-    uint testAmount = 100;
-
-    function test_TokenIsMinted() public {
+    function test_TokenIsMinted_Name() public view {
         assertEq(token.name(), 'Uniswap V2');
+    }
+
+    function test_TokenIsMinted_Symbol() public view {
         assertEq(token.symbol(), 'UNI-V2');
+    }
+
+    function test_TokenIsMinted_Decimals() public view {
         assertEq(token.decimals(), 18);
+    }
+
+    function test_TokenIsMinted_TotalSupply() public view {
         assertEq(token.totalSupply(), mintAmount);
+    }
+
+    function test_TokenIsMinted_BalanceOF() public view {
         assertEq(token.balanceOf(address(this)), mintAmount);
+    }
+
+    function test_TokenIsMinted_DomainSeparator() public view {
         assertEq(
             token.DOMAIN_SEPARATOR(),
             keccak256(
@@ -35,62 +44,146 @@ contract ERC20Tests is Deployed {
                     keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
                     keccak256(bytes('Uniswap V2')),
                     keccak256(bytes('1')),
-                    1,
+                    block.chainid,
                     address(token)
                 )
             )
         );
+    }
+
+    function test_TokenIsMinted_PermitTypehash() public view {
         assertEq(
             token.PERMIT_TYPEHASH(),
             keccak256(('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)'))
         );
     }
 
-    function test_approve() public {
+    function test_approve(address other, uint approvalAmount) public {
+        vm.assume(other != address(this));
         vm.expectEmit(true, true, true, true);
-        emit Approval(address(this), other, testAmount);
-        token.approve(other, testAmount);
-        assertEq(token.allowance(address(this), other), testAmount);
+        emit IUniswapV2ERC20.Approval(address(this), other, approvalAmount);
+        token.approve(other, approvalAmount);
+        assertEq(token.allowance(address(this), other), approvalAmount);
     }
 
-    function test_transfer() public {
+    function test_transfer(address other, uint transferAmount) public {
+        vm.assume(other != address(this) && transferAmount <= mintAmount);
         vm.expectEmit(true, true, true, true);
-        emit Transfer(address(this), other, testAmount);
-        token.transfer(other, testAmount);
-        assertEq(token.balanceOf(address(this)), mintAmount - testAmount);
-        assertEq(token.balanceOf(other), testAmount);
+        emit IUniswapV2ERC20.Transfer(address(this), other, transferAmount);
+        token.transfer(other, transferAmount);
+        assertEq(token.balanceOf(address(this)), mintAmount - transferAmount);
+        assertEq(token.balanceOf(other), transferAmount);
     }
 
-    function test_transfer_Unauthorized() public {
-        vm.prank(other);
-        vm.expectRevert();
-        token.transfer(other, testAmount);
+    function test_transfer_OverMintAmount(address other, uint transferAmount) public {
+        vm.assume(other != address(this) && transferAmount > mintAmount);
+        vm.expectRevert('ds-math-sub-underflow');
+        token.transfer(other, transferAmount);
     }
 
-    function test_transfer_OverAmount() public {
-        vm.expectRevert();
-        token.transfer(other, mintAmount + 1);
-    }
-
-    function test_tranferFrom() public {
-        token.approve(other, testAmount);
+    function test_tranferFrom(address other, uint transferAmount) public {
+        vm.assume(other != address(this) && transferAmount <= mintAmount);
+        token.approve(other, transferAmount);
         vm.prank(other);
         vm.expectEmit(true, true, true, true);
-        emit Transfer(address(this), other, testAmount);
-        token.transferFrom(address(this), other, testAmount);
+        emit IUniswapV2ERC20.Transfer(address(this), other, transferAmount);
+        token.transferFrom(address(this), other, transferAmount);
         assertEq(token.allowance(address(this), other), 0);
-        assertEq(token.balanceOf(address(this)), mintAmount - testAmount);
-        assertEq(token.balanceOf(other), testAmount);
+        assertEq(token.balanceOf(address(this)), mintAmount - transferAmount);
+        assertEq(token.balanceOf(other), transferAmount);
     }
 
-    function test_tranferFrom_MaximumAllowance() public {
-        token.approve(other, MAX_INT);
+    function test_tranferFrom_MaximumAllowance(address other, uint transferAmount) public {
+        vm.assume(other != address(this) && transferAmount <= mintAmount);
+        token.approve(other, Constants.MAX_UINT256);
         vm.prank(other);
         vm.expectEmit(true, true, true, true);
-        emit Transfer(address(this), other, testAmount);
-        token.transferFrom(address(this), other, testAmount);
-        assertEq(token.allowance(address(this), other), MAX_INT);
-        assertEq(token.balanceOf(address(this)), mintAmount - testAmount);
-        assertEq(token.balanceOf(other), testAmount);
+        emit IUniswapV2ERC20.Transfer(address(this), other, transferAmount);
+        token.transferFrom(address(this), other, transferAmount);
+        assertEq(token.allowance(address(this), other), Constants.MAX_UINT256);
+        assertEq(token.balanceOf(address(this)), mintAmount - transferAmount);
+        assertEq(token.balanceOf(other), transferAmount);
+    }
+
+    function test_transferFrom_OverApprovalAmount(address other, uint approvalAmount, uint transferAmount) public {
+        vm.assume(other != address(this) && approvalAmount < transferAmount && transferAmount <= mintAmount);
+        token.approve(other, approvalAmount);
+        vm.prank(other);
+        vm.expectRevert('ds-math-sub-underflow');
+        token.transfer(other, transferAmount);
+    }
+
+    function test_transferFrom_OverMintAmount(address other, uint approvalAmount, uint transferAmount) public {
+        vm.assume(other != address(this) && transferAmount <= approvalAmount && transferAmount > mintAmount);
+        token.approve(other, approvalAmount);
+        vm.prank(other);
+        vm.expectRevert('ds-math-sub-underflow');
+        token.transfer(other, transferAmount + 1);
+    }
+
+    function test_Permit(string memory randomOwnerString, address spender, uint deadline, uint approvalAmount) public {
+        (address owner, uint256 ownerPK) = makeAddrAndKey(randomOwnerString);
+        vm.assume(deadline >= block.timestamp && owner != spender);
+        uint nonce_before = token.nonces(owner);
+
+        (uint8 v, bytes32 r, bytes32 s) = Helpers.getVRSForERC20Permit(
+            token,
+            ownerPK,
+            owner,
+            spender,
+            approvalAmount,
+            deadline
+        );
+
+        vm.expectEmit(true, true, true, true);
+        emit IUniswapV2ERC20.Approval(owner, spender, approvalAmount);
+        token.permit(owner, spender, approvalAmount, deadline, v, r, s);
+
+        assertEq(token.allowance(owner, spender), approvalAmount);
+        assertEq(token.nonces(owner), nonce_before + 1);
+    }
+
+    function test_Permit_Expired(
+        string memory randomOwnerString,
+        address spender,
+        uint deadline,
+        uint approvalAmount
+    ) public {
+        (address owner, uint256 ownerPK) = makeAddrAndKey(randomOwnerString);
+        vm.assume(deadline < block.timestamp && owner != spender);
+
+        (uint8 v, bytes32 r, bytes32 s) = Helpers.getVRSForERC20Permit(
+            token,
+            ownerPK,
+            owner,
+            spender,
+            approvalAmount,
+            deadline
+        );
+
+        vm.expectRevert('UniswapV2: EXPIRED');
+        token.permit(owner, spender, approvalAmount, deadline, v, r, s);
+    }
+
+    function test_Permit_InvalidSignature(
+        string memory randomOwnerString,
+        address spender,
+        uint deadline,
+        uint approvalAmount
+    ) public {
+        (address owner, uint256 ownerPK) = makeAddrAndKey(randomOwnerString);
+        vm.assume(deadline >= block.timestamp && owner != spender);
+
+        (uint8 v, bytes32 r, bytes32 s) = Helpers.getVRSForERC20Permit(
+            token,
+            ownerPK + 1,
+            owner,
+            spender,
+            approvalAmount,
+            deadline
+        );
+
+        vm.expectRevert('UniswapV2: INVALID_SIGNATURE');
+        token.permit(owner, spender, approvalAmount, deadline, v, r, s);
     }
 }
