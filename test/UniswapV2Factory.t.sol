@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {Test, console} from 'forge-std/Test.sol';
-import {IUniswapV2Factory, Deployer} from './util/Deployer.sol';
-import {Helpers} from './util/Helpers.sol';
-import {Constants} from './util/Constants.sol';
+import {Test, console} from "forge-std/Test.sol";
+import {IUniswapV2Factory, Deployer} from "./util/Deployer.sol";
+import {Helpers} from "./util/Helpers.sol";
+import {Constants} from "./util/Constants.sol";
 
 abstract contract Deployed is Test {
     IUniswapV2Factory factory;
@@ -35,20 +35,20 @@ contract FactoryTests is Deployed {
 
     function test_createPair_IdenticalAddresses(address token) public {
         vm.assume(token != Constants.ADDRESS_ZERO);
-        vm.expectRevert('UniswapV2: IDENTICAL_ADDRESSES');
+        vm.expectRevert("UniswapV2: IDENTICAL_ADDRESSES");
         factory.createPair(token, token);
     }
 
     function test_createPair_ZeroAddress(address token) public {
         vm.assume(token != Constants.ADDRESS_ZERO);
-        vm.expectRevert('UniswapV2: ZERO_ADDRESS');
+        vm.expectRevert("UniswapV2: ZERO_ADDRESS");
         factory.createPair(token, Constants.ADDRESS_ZERO);
     }
 
     function test_createPair_PairExists(address token0, address token1) public {
         vm.assume(token0 != token1 && token0 != Constants.ADDRESS_ZERO && token1 != Constants.ADDRESS_ZERO);
         factory.createPair(token0, token1);
-        vm.expectRevert('UniswapV2: PAIR_EXISTS');
+        vm.expectRevert("UniswapV2: PAIR_EXISTS");
         factory.createPair(token0, token1);
     }
 
@@ -62,7 +62,7 @@ contract FactoryTests is Deployed {
     function test_setFeeTo_Unauthorized(address other) public {
         vm.assume(other != address(this));
         vm.prank(other);
-        vm.expectRevert('UniswapV2: FORBIDDEN');
+        vm.expectRevert("UniswapV2: FORBIDDEN");
         factory.setFeeTo(other);
     }
 
@@ -76,7 +76,7 @@ contract FactoryTests is Deployed {
     function test_setFeeToSetter_Unauthorized(address other) public {
         vm.assume(other != address(this));
         vm.prank(other);
-        vm.expectRevert('UniswapV2: FORBIDDEN');
+        vm.expectRevert("UniswapV2: FORBIDDEN");
         factory.setFeeToSetter(other);
     }
 
@@ -86,7 +86,7 @@ contract FactoryTests is Deployed {
         factory.setFeeToSetter(other);
         assertEq(factory.feeToSetter(), other);
         assertEq(factory.feeTo(), other);
-        vm.expectRevert('UniswapV2: FORBIDDEN');
+        vm.expectRevert("UniswapV2: FORBIDDEN");
         factory.setFeeToSetter(other);
     }
 }
