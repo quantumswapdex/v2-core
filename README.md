@@ -1,11 +1,11 @@
-# Uniswap V2
+# BakerSwap V2
 
-[![Actions Status](https://github.com/Uniswap/uniswap-v2-core/workflows/CI/badge.svg)](https://github.com/Uniswap/uniswap-v2-core/actions)
-[![Version](https://img.shields.io/npm/v/@uniswap/v2-core)](https://www.npmjs.com/package/@uniswap/v2-core)
+[![Actions Status](https://github.com/BakerSwap/bakerswap-v2-core/workflows/CI/badge.svg)](https://github.com/BakerSwap/bakerswap-v2-core/actions)
+[![Version](https://img.shields.io/npm/v/@bakerswap/v2-core)](https://www.npmjs.com/package/@bakerswap/v2-core)
 
-In-depth documentation on Uniswap V2 is available at [uniswap.org](https://uniswap.org/docs).
+In-depth documentation on BakerSwap V2 is available at [bakerswap.org](https://bakerswap.org/docs).
 
-The built contract artifacts can be browsed via [unpkg.com](https://unpkg.com/browse/@uniswap/v2-core@latest/).
+The built contract artifacts can be browsed via [unpkg.com](https://unpkg.com/browse/@bakerswap/v2-core@latest/).
 
 # Local Development
 
