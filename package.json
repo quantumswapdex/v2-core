@@ -22,27 +22,33 @@
     "node": ">=10"
   },
   "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^2.1.0",
+    "@nomicfoundation/hardhat-ethers": "^3.1.0",
+    "@nomicfoundation/hardhat-ignition": "^0.15.13",
+    "@nomicfoundation/hardhat-ignition-ethers": "^0.15.14",
+    "@nomicfoundation/hardhat-network-helpers": "^1.1.0",
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "@nomicfoundation/hardhat-verify": "^2.1.1",
+    "@typechain/ethers-v6": "^0.5.1",
+    "@typechain/hardhat": "^9.1.0",
     "@types/chai": "^4.2.6",
-    "@types/mocha": "^5.2.7",
-    "chai": "^4.2.0",
-    "ethereum-waffle": "^2.4.1",
-    "ethereumjs-util": "^6.2.0",
-    "mocha": "^6.2.2",
-    "prettier": "^1.19.1",
-    "rimraf": "^3.0.0",
-    "solc": "0.5.16",
-    "ts-node": "^8.5.4",
-    "typescript": "^3.7.3"
+    "@types/mocha": "^10.0.10",
+    "chai": "4",
+    "ethers": "6.15.0",
+    "hardhat": "^2.26.2",
+    "hardhat-gas-reporter": "^2.3.0",
+    "prettier": "^3.6.2",
+    "solidity-coverage": "^0.8.16",
+    "ts-node": "^10.9.2",
+    "typechain": "^8.3.2",
+    "typescript": "^5.9.2"
   },
   "scripts": {
-    "lint": "yarn prettier ./test/*.ts --check",
-    "lint:fix": "yarn prettier ./test/*.ts --write",
-    "clean": "rimraf ./build/",
-    "precompile": "yarn clean",
-    "compile": "waffle .waffle.json",
-    "pretest": "yarn compile",
-    "test": "mocha",
-    "prepublishOnly": "yarn test"
+    "lint:fix": "yarn prettier ./test/hardhat/*.ts --write",
+    "precompile": "npx hardhat clean",
+    "compile": "npx hardhat compile",
+    "test:hh": "npx hardhat test test/hardhat/*.spec.ts",
+    "prepublishOnly": "yarn test:hh"
   },
   "license": "GPL-3.0-or-later"
 }
